@@ -2,7 +2,7 @@ BIN_DIR = bin
 CC = gcc
 CFLAGS = -std=c99 -O3 -Wall -Wpedantic
 
-all: mkbin select-server
+all: mkbin http-server
 
 %: %.c
 	$(CC) $(CFLAGS) -o $(BIN_DIR)/$@ $<

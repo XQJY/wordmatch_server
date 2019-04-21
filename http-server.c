@@ -44,7 +44,8 @@ typedef enum
     UNKNOWN
 } METHOD;
 
-    typedef enum{
+// represents the types of requests
+typedef enum{
     GET_INTRO,
     POST_NAME,
     GET_START,
@@ -56,6 +57,7 @@ typedef enum
     RETRY
 }type;
 
+// represents the current status of the server
 typedef enum{
     STANDBY,
     PENDING_READY,
@@ -85,12 +87,14 @@ static int player2sock = -1;
 static int unsettledsock = -1;
 static int currentRound = -1;
 
+//Enter the next round, assign a new and different picture ID for the server
 static void nextRound(){
     if(currentRound == -1){
         currentRound = rand()%4 + 1;
     } else currentRound = (currentRound + rand() % 3) % 4 + 1;
 }
 
+//If a player start a game, save the sockfd for that player
 static void setPlayer(int sockfd){
     if(player1sock < 0){
         player1sock = sockfd;
@@ -99,10 +103,13 @@ static void setPlayer(int sockfd){
     }
 }
 
+//To tell whether the current socket is playing the game
 static bool isPlayer(int sockfd){
     return player1sock == sockfd || player2sock ==sockfd;
 }
 
+/*If one of the players triggers the completion of the game
+  the other player is marked as unsettled*/
 static void record_unsettled(int sockfd){
     if(player1sock == sockfd){
         unsettledsock = player2sock;
@@ -111,6 +118,7 @@ static void record_unsettled(int sockfd){
     }
 }
 
+//Clear the caches for the old game
 static void reset(){
     int i = 0;
     player1sock = -1;
@@ -129,6 +137,7 @@ static void reset(){
     }
 }
 
+//return the wordlist of the current player
 static char** listOf(int sockfd){
     if(player1sock == sockfd){
         return wordList1;
@@ -137,6 +146,7 @@ static char** listOf(int sockfd){
     } else return NULL;
 }
 
+//return the wordlist of the current opponent
 static char** listOfOpponent(int sockfd){
     if(player1sock == sockfd){
         return wordList2;
@@ -145,7 +155,7 @@ static char** listOfOpponent(int sockfd){
     } else return NULL;
 }
 
-
+//Concatenate the wordList to be a single string
 static char* concatenateList(int sockfd){
     int len = 0;
     int i = 0;
@@ -170,6 +180,7 @@ static char* concatenateList(int sockfd){
     return temp;
 }
 
+//check if the word matches any word in the opponent's wordList
 static bool match(char* word, int sockfd){
     int i = 0;
     char ** tempList = listOfOpponent(sockfd);
@@ -182,6 +193,7 @@ static bool match(char* word, int sockfd){
     return false;
 }
 
+//Check whether it's a duplicate sessionID
 static int uniqueID(int sessionID){
     int i;
     for(i = 0; i < 10; i++){
@@ -193,11 +205,12 @@ static int uniqueID(int sessionID){
 }
 
 
-//generate a cookie, return the sessionID
+//Generate a cookie, return the sessionID
 static long generateCookie(char* username){
     int index;
     long sessionID;
 
+    //The server can only remeber the recent 10 visitors
     if(currCookie < 10) {
         index = currCookie;
         cookieLib[index] = (cookie*) malloc(sizeof(cookie));
@@ -218,6 +231,7 @@ static long generateCookie(char* username){
     return sessionID;
 }
 
+//Give a cookie, return the corresponding name of that sessionID
 static char* searchCookie(long sessionID){
     int i;
     for(i = 0; i < 10; i++){
@@ -229,12 +243,13 @@ static char* searchCookie(long sessionID){
     return NULL;
 }
 
+//Parse the Request header to a structure type
 static req* parseRequest(char* buff, int sockfd){
     req* temp = malloc(sizeof(req));
     char * curr = buff;
     METHOD method = UNKNOWN;
 
-    // parse the method
+    // Parse the method
     if (strncmp(curr, "GET ", 4) == 0)
     {
         curr += 4;
@@ -251,18 +266,19 @@ static req* parseRequest(char* buff, int sockfd){
         return NULL;
     }
 
-    // sanitise the URI
+    // Sanitise the URI
     while (*curr == '.' || *curr == '/')
         ++curr;
 
-    // parse the type and the value of the request
+    // Parse the type and the value of the request
     if(method == GET) {
         if (strncmp(curr, "?start=Start ", 13) == 0) {
             temp->dynamic = true;
             temp->reqType = GET_START;
             temp->value = NULL;
             temp->cookie = false;
-        }   //read the cookie and return to the start page if the sessionID is stored in the server
+        }
+        //read the cookie and return to the start page if the sessionID is stored in the server
             else if ((curr = strstr(buff, "sessionID=")) != NULL) {
             long sessionID = atol(curr + 10);
             if ((curr = searchCookie(sessionID)) != NULL) {
@@ -320,13 +336,14 @@ static req* parseRequest(char* buff, int sockfd){
     return temp;
 }
 
+//Simply send the HTML file if there's nothing need to be changed
 static bool response_static_request(type t, int sockfd){
     char* html;
     //decide which html file to read
     if(t == GET_INTRO){
         html = "1_intro.html";
     }  else if (t == POST_QUIT){
-        //reset the status
+        //reset the status if the request is from a current player
         if(isPlayer(sockfd)) {
             stage = STANDBY;
             reset();
@@ -342,7 +359,7 @@ static bool response_static_request(type t, int sockfd){
         perror("typeError");
         return false;
     }
-    // send the HTTP response header
+    // Send the HTTP response header
     char buff[2049];
     int n;
     struct stat st;
@@ -353,7 +370,7 @@ static bool response_static_request(type t, int sockfd){
         perror("write");
         return false;
     }
-    // send the file
+    // Send the file
     int filefd = open(html, O_RDONLY);
     do{
         n = sendfile(sockfd, filefd, NULL, 2048);
@@ -369,6 +386,7 @@ static bool response_static_request(type t, int sockfd){
     return true;
 }
 
+//Edit the html file in the buffer and send it to the client
 static bool response_dynamic_request(req* r, int sockfd){
     int n = 0;
     int i = 0;
@@ -380,18 +398,23 @@ static bool response_dynamic_request(req* r, int sockfd){
     long added_length = 0;
     char buff[2049];
 
-    //decide which html file to read
+    //Decide which html file to read
+    /**if name is posted**/
     if(r->reqType == POST_NAME){
         html = "2_start.html";
-    } else if(r->reqType == POST_GUESS){
-        //if the game is completed but not settled for a player, end the game
+    }
+    /**if guess is attemptted**/
+    else if(r->reqType == POST_GUESS){
+        //If the game is completed but not settled, end the game for the player
         if(sockfd == unsettledsock) {
             unsettledsock = -1;
             if (!response_static_request(ENDGAME, sockfd)) {
                 return false;
             }
             return true;
-        } else if(!isPlayer(sockfd)){
+        }
+        //If the player is not playing the current game, show error messages
+        else if(!isPlayer(sockfd)){
             if (!response_static_request(DISCONNECTED, sockfd)) {
                 return false;
             }
@@ -399,20 +422,23 @@ static bool response_dynamic_request(req* r, int sockfd){
         }
         if(stage == READY){
             html = "4_accepted.html";
-            //check if the player have a match
+            //Check if the player have a match
             if(match(r->value, sockfd)) {
+                //if so, reset the game and record the opponent's status as unsettled
                 record_unsettled(sockfd);
                 stage = STANDBY;
                 reset();
+                //End the game
                 if(!response_static_request(ENDGAME,sockfd)){
                     return false;
                 }
                 return true;
             }
         } else if(stage == PENDING_READY){
-            //if another player are not ready, return discarded html
+            //If another player is not ready, return the discarded html
             html = "5_discarded.html";
-        } else if(stage == STANDBY){
+        }   //If the other player has left the game, show error messages
+        else if(stage == STANDBY){
             if (!response_static_request(DISCONNECTED, sockfd)) {
                 return false;
             }
@@ -421,8 +447,11 @@ static bool response_dynamic_request(req* r, int sockfd){
             perror("stage error");
             return false;
         }
-    } else if(r->reqType == GET_START){
-        //if the player is already in a game, i.e refresh the page, we end his game
+    }
+    /**if start button is pressed**/
+    else if(r->reqType == GET_START){
+        html = "3_first_turn.html";
+        //if the player is already in a game, i.e refresh the page, end game
         if(isPlayer(sockfd)){
             r->reqType = POST_QUIT;
             if(!response_static_request(POST_QUIT,sockfd)){
@@ -430,18 +459,21 @@ static bool response_dynamic_request(req* r, int sockfd){
             }
             return true;
         }
-        //change the status to get ready for the game
+        //Change the status to get ready for the game
         if(stage == STANDBY){
             setPlayer(sockfd);
             nextRound();
             stage = PENDING_READY;
-        }  else if(stage == PENDING_READY) {
+        }
+        //Start the game by advancing the status again
+        else if(stage == PENDING_READY) {
             setPlayer(sockfd);
             stage = READY;
-        }  else if(!response_static_request(RETRY,sockfd)){
+        }
+        //Prompt retry message if there are no vacancy for a new player
+        else if(!response_static_request(RETRY,sockfd)){
             return false;
         }
-        html = "3_first_turn.html";
     } else {
         perror("typeError");
         return false;
@@ -453,13 +485,17 @@ static bool response_dynamic_request(req* r, int sockfd){
     // increase file size to accommodate the username
 
     long size = 0;
-    //Calculate the addedLength
+    //Calculate the addedLength, and generate the header
     if(r->reqType == POST_NAME){
         if(r->cookie) {
+            /*The response header for POST_NAME request with a valid cookie,
+            which is redirected from a GET Request*/
             added_length = strlen(r->value) + NAME_HTML_LENGTH;
             size = st.st_size + added_length;
             n = sprintf(buff, HTTP_200_FORMAT, size);
         } else {
+            /*The response header for POST_NAME request without a valid cookie,
+            assign and send the COOKIE to the client*/
             long randID = generateCookie(r->value);
             added_length = strlen(r->value) + NAME_HTML_LENGTH;
             size = st.st_size + added_length;
@@ -467,6 +503,7 @@ static bool response_dynamic_request(req* r, int sockfd){
         }
     } else if(r->reqType == POST_GUESS){
         if(stage == READY){
+          /*Calculate the header of a single word Accepted Page*/
             wordList = listOf(sockfd);
             if(wordList[0] == NULL) {
                 singleWord = true;
@@ -475,6 +512,7 @@ static bool response_dynamic_request(req* r, int sockfd){
                 memcpy(wordList[0], r->value, sizeof(char) * strlen(r->value) + 1);
             }
             else {
+            /*Calculate the header of mplti-word Accepted Page*/
                 singleWord = false;
                 while(i < 20){
                     if(wordList[i] == NULL) {
@@ -484,27 +522,30 @@ static bool response_dynamic_request(req* r, int sockfd){
                     }
                     i++;
                 }
+                //Also convert the word list to a single string
                 insertion = concatenateList(sockfd);
                 added_length = strlen(insertion) + strlen(" have been ");
             }
-        } else {
+        }/*Calculate the header of a Discarded Page*/
+         else {
             added_length = strlen(r->value) + strlen(" has been ");
         }
         size = st.st_size + added_length;
         n = sprintf(buff, HTTP_200_FORMAT, size);
-    } else if(r->reqType == GET_START){
+    }/*Calculate the header of a First-turn Page*/
+    else if(r->reqType == GET_START){
         size = st.st_size;
         n = sprintf(buff, HTTP_200_FORMAT, size);
     }
 
-    // send the HTTP response header
+    // Send the HTTP response header
     if (write(sockfd, buff, n) < 0)
     {
         perror("write");
         return false;
     }
 
-    // read the content of the HTML file
+    // Read the content of the HTML file
     int filefd = open(html, O_RDONLY);
     n = read(filefd, buff, 2048);
     if (n < 0)
@@ -515,7 +556,7 @@ static bool response_dynamic_request(req* r, int sockfd){
     }
     close(filefd);
 
-    // move the trailing part backward
+    // Calculate the variables for editing the html page
     if(r->reqType == POST_NAME){
         move_from = ((int) (strstr(buff, "\n<form method=\"GET\">") - buff));
         insertion = (char*) calloc(sizeof(char), added_length);
@@ -538,22 +579,23 @@ static bool response_dynamic_request(req* r, int sockfd){
             strcat(insertion, " has been ");
         }
     }
-
+    //Move the trailing part backward, the first_turn page don't have any insertion
     if(r->reqType != GET_START){
         int p1, p2;
         for (p1 = size - 1, p2 = p1 - added_length; p2 >= move_from; --p1, --p2)
             buff[p1] = buff[p2];
         ++p2;
 
-        // put the separator
-
+        // Put the separator
         strncpy(buff + p2, insertion, added_length);
         free(insertion);
     }
 
+    //Change the picture
     if(r->reqType != POST_NAME)
     *(strstr(buff, ".jpg") - 1) = (char) (currentRound + 48);
 
+    //Send the page
     if (write(sockfd, buff, size) < 0)
     {
         perror("write");
@@ -562,10 +604,12 @@ static bool response_dynamic_request(req* r, int sockfd){
     return true;
 }
 
+//Swicther of responses
 static bool handle_http_request(int sockfd)
 {
-    // try to read the request
+    // Try to read the request
     char buff[2049];
+    req * request;
     int n = read(sockfd, buff, 2049);
     if (n <= 0)
     {
@@ -576,17 +620,15 @@ static bool handle_http_request(int sockfd)
         return false;
     }
 
-    // terminate the string
+    // Terminate the string
     buff[n] = 0;
 
-    req * request;
-
-    // return the failure
+    // Return the failure
     if((request = parseRequest(buff,sockfd)) == NULL){
         return false;
     }
 
-
+    //Handle INVALID requests
     if (request->reqType == INVALID){
         fprintf(stderr, "no other methods supported");
         if (write(sockfd, HTTP_404, HTTP_404_LENGTH) < 0)
@@ -595,12 +637,16 @@ static bool handle_http_request(int sockfd)
             free(request);
             return false;
         }
-    } else if (request->dynamic == false){
+    }
+    // Handle static responses
+    else if (request->dynamic == false){
         if(!response_static_request(request->reqType, sockfd)){
             free(request);
             return false;
         }
-    } else {
+    }
+    // Handle dynamic responses
+    else {
         if(!response_dynamic_request(request, sockfd)){
             free(request);
             return false;
@@ -613,6 +659,7 @@ static bool handle_http_request(int sockfd)
 
 int main(int argc, char * argv[])
 {
+    //initialise the random generator with random seed
     srand (time(NULL));
 
     if (argc < 3)
@@ -702,9 +749,10 @@ int main(int argc, char * argv[])
                         );
                     }
                 }
-                    // a request is sent from the client
+                // a request is sent from the client
                 else if (!handle_http_request(i))
                 {
+                    //reset the server parameters when disconnected
                     if(isPlayer(i))reset();
 
                     if(unsettledsock == i){
