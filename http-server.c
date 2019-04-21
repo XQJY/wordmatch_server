@@ -77,19 +77,87 @@ typedef struct cookie{
 //static variables
 static cookie* cookieLib[10];
 static char* wordList;
+static char* wordList1[20];
+static char* wordList2[20];
 static int currCookie = 0;
 static status stage = STANDBY;
 static int player1sock = -1;
 static int player2sock = -1;
 static int submittedsock = -1;
 static int unsettledsock = -1;
+static int currentRound = -1;
 
-static void resetPlayer(int sockfd){
-    if(player1sock == sockfd){
-        player1sock = -1;
-    } else if (player2sock == sockfd){
-        player2sock = -1;
+static void nextRound(){
+    if(currentRound == -1){
+        currentRound = rand()%4 + 1;
+    } else currentRound = (currentRound + rand() % 3) % 4 + 1;
+}
+
+static void setPlayer(int sockfd){
+    if(player1sock < 0){
+        player1sock = sockfd;
+    } else if (player2sock < 0){
+        player2sock = sockfd;
     }
+}
+
+static bool isPlayer(int sockfd){
+    return player1sock == sockfd || player2sock ==sockfd;
+}
+
+static void resetPlayer(){
+        player1sock = -1;
+        player2sock = -1;
+}
+
+static char* concatenateList(char** wordList){
+    int len = 0;
+    int i,j = 0;
+    char* temp;
+
+    while(i < 20 && wordList[i] != NULL){
+        len += strlen(wordList[i]);
+        i++;
+    }
+
+    len += 2 * (i-1);
+    temp = calloc(sizeof(char), len + 1);
+
+    while(j < 20 && wordList[j] != NULL){
+        strcat(temp, wordList[j]);
+        if(j != i -1) strcat(temp, ", ");
+    }
+
+    return temp;
+}
+
+static char** listOf(int sockfd){
+    if(player1sock == sockfd){
+        return wordList1;
+    } else if (player2sock == sockfd){
+        return wordList2;
+    } else return NULL;
+}
+
+static char** listOfOpponent(int sockfd){
+    if(player1sock == sockfd){
+        return wordList2;
+    } else if (player2sock == sockfd){
+        return wordList1;
+    } else return NULL;
+}
+
+static bool match(char* word, int sockfd){
+    int i = 0;
+    char ** temp = listOfOpponent(sockfd);
+
+    if(temp == NULL) return false;
+
+    while(i < 20 && temp[i] != NULL){
+      if(strcmp(temp[i], word))  return true;
+    }
+
+    return false;
 }
 
 static int uniqueID(int sessionID){
@@ -101,6 +169,7 @@ static int uniqueID(int sessionID){
     }
     return true;
 }
+
 
 //generate a cookie, return the sessionID
 static long generateCookie(char* username){
@@ -167,9 +236,10 @@ static req* parseRequest(char* buff, int sockfd){
     // parse the type and the value of the request
     if(method == GET) {
         if (strncmp(curr, "?start=Start ", 13) == 0) {
-            temp->dynamic = false;
+            temp->dynamic = true;
             temp->reqType = GET_START;
             temp->value = NULL;
+            temp->cookie = false;
         }   //read the cookie and return to the start page if the sessionID is stored in the server
             else if ((curr = strstr(buff, "sessionID=")) != NULL) {
             long sessionID = atol(curr + 10);
@@ -182,12 +252,14 @@ static req* parseRequest(char* buff, int sockfd){
                 temp->dynamic = false;
                 temp->reqType = GET_INTRO;
                 temp->value = NULL;
+                temp->cookie = false;
             }
         }
         else {
             temp->dynamic = false;
             temp->reqType = GET_INTRO;
             temp->value = NULL;
+            temp->cookie = false;
         }
     }
 
@@ -196,19 +268,23 @@ static req* parseRequest(char* buff, int sockfd){
             temp->dynamic = false;
             temp->reqType = POST_QUIT;
             temp->value = NULL;
+            temp->cookie = false;
         } else if((curr = strstr(buff,"keyword=")) != NULL){
             temp->dynamic = true;
             temp->reqType = POST_GUESS;
             temp->value = curr + 8;
+            temp->cookie = false;
             *strstr(curr,"&") = '\0';
         } else if((curr = strstr(buff,"user=")) != NULL){
             temp->dynamic = true;
             temp->reqType = POST_NAME;
             temp->value = curr + 5;
+            temp->cookie = false;
         } else {
             temp->dynamic = false;
             temp->reqType = INVALID;
             temp->value = NULL;
+            temp->cookie = false;
         }
     }
 
@@ -216,6 +292,7 @@ static req* parseRequest(char* buff, int sockfd){
         temp->dynamic = false;
         temp->reqType = INVALID;
         temp->value = NULL;
+        temp->cookie = false;
     }
 
     return temp;
@@ -223,29 +300,18 @@ static req* parseRequest(char* buff, int sockfd){
 
 static bool response_static_request(type t, int sockfd){
     char* html;
-
     //decide which html file to read
     if(t == GET_INTRO){
         html = "1_intro.html";
-    } else if(t == GET_START){
-        html = "3_first_turn.html";
-        //change the status to get ready for the game
-        if(stage == PENDING_READY) {
-            stage = READY;
-            //reset the wordList when both player is ready
-            free(wordList);
-            wordList = NULL;
-        }  else {
-            stage = PENDING_READY;
-        }
-    } else if (t == POST_QUIT){
+    }  else if (t == POST_QUIT){
         //reset the status
         stage = STANDBY;
         submittedsock = -1;
+        resetPlayer();
         html = "7_gameover.html";
     } else if (t == ENDGAME){
         html = "6_endgame.html";
-    }else if (t == RETRY){
+    } else if (t == RETRY){
         html = "8_retry.html";
     } else if (t == DISCONNECTED){
         html = "9_disconnected.html";
@@ -300,6 +366,11 @@ static bool response_dynamic_request(req* r, int sockfd){
                 return false;
             }
             return true;
+        } else if(!isPlayer(sockfd)){
+            if (!response_static_request(DISCONNECTED, sockfd)) {
+                return false;
+            }
+            return true;
         }
         if(stage == READY){
             html = "4_accepted.html";
@@ -307,9 +378,12 @@ static bool response_dynamic_request(req* r, int sockfd){
             if(submittedsock < 0) {
                 submittedsock = sockfd;
             } else if (submittedsock != sockfd){
+                //COMPLETED RESET
                 unsettledsock = submittedsock;
                 submittedsock = -1;
                 wordList = NULL;
+                stage = STANDBY;
+                resetPlayer();
                 if(!response_static_request(ENDGAME,sockfd)){
                     return false;
                 }
@@ -327,7 +401,30 @@ static bool response_dynamic_request(req* r, int sockfd){
             perror("stage error");
             return false;
         }
-    }else {
+    } else if(r->reqType == GET_START){
+        //if the player is already in a game, i.e refresh the page, we end his game
+        if(isPlayer(sockfd)){
+            r->reqType = POST_QUIT;
+            if(!response_static_request(POST_QUIT,sockfd)){
+                return false;
+            }
+            return true;
+        }
+        //change the status to get ready for the game
+        if(stage == STANDBY){
+            setPlayer(sockfd);
+            nextRound();
+            stage = PENDING_READY;
+        }  else if(stage == PENDING_READY) {
+            stage = READY;
+            //reset the wordList when both player is ready
+            free(wordList);
+            wordList = NULL;
+        }  else if(!response_static_request(RETRY,sockfd)){
+            return false;
+        }
+        html = "3_first_turn.html";
+    } else {
         perror("typeError");
         return false;
     }
@@ -370,9 +467,9 @@ static bool response_dynamic_request(req* r, int sockfd){
         }
         size = st.st_size + added_length;
         n = sprintf(buff, HTTP_200_FORMAT, size);
-    } else {
-        perror("typeError");
-        return false;
+    } else if(r->reqType == GET_START){
+        size = st.st_size;
+        n = sprintf(buff, HTTP_200_FORMAT, size);
     }
 
     // send the HTTP response header
@@ -414,20 +511,22 @@ static bool response_dynamic_request(req* r, int sockfd){
             memcpy(insertion, r->value, sizeof(char)* (strlen(r->value) +1));
             strcat(insertion, " has been ");
         }
-    } else {
-        perror("typeError");
-        return false;
     }
 
-    int p1, p2;
-    for (p1 = size - 1, p2 = p1 - added_length; p2 >= move_from; --p1, --p2)
-        buff[p1] = buff[p2];
-    ++p2;
+    if(r->reqType != GET_START){
+        int p1, p2;
+        for (p1 = size - 1, p2 = p1 - added_length; p2 >= move_from; --p1, --p2)
+            buff[p1] = buff[p2];
+        ++p2;
 
-    // put the separator
+        // put the separator
 
-    strncpy(buff + p2, insertion, added_length);
-    free(insertion);
+        strncpy(buff + p2, insertion, added_length);
+        free(insertion);
+    }
+
+    if(r->reqType != POST_NAME)
+    *(strstr(buff, ".jpg") - 1) = (char) (currentRound + 48);
 
     if (write(sockfd, buff, size) < 0)
     {
@@ -461,10 +560,6 @@ static bool handle_http_request(int sockfd)
         return false;
     }
 
-    if(sockfd != player1sock && sockfd != player2sock) {
-        request -> reqType = RETRY;
-        request-> dynamic = false;
-    }
 
     if (request->reqType == INVALID){
         fprintf(stderr, "no other methods supported");
@@ -562,11 +657,6 @@ int main(int argc, char * argv[])
                     struct sockaddr_in cliaddr;
                     socklen_t clilen = sizeof(cliaddr);
                     int newsockfd = accept(sockfd, (struct sockaddr *)&cliaddr, &clilen);
-                    if(player1sock < 0){
-                        player1sock = newsockfd;
-                    } else if (player2sock < 0){
-                        player2sock = newsockfd;
-                    }
                     if (newsockfd < 0)
                         perror("accept");
                     else
@@ -589,7 +679,7 @@ int main(int argc, char * argv[])
                     // a request is sent from the client
                 else if (!handle_http_request(i))
                 {
-                    resetPlayer(i);
+                    if(isPlayer(i))resetPlayer();
 
                     if(unsettledsock == i){
                         unsettledsock = -1;
