@@ -12,7 +12,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="208285f7-7617-466d-9996-0ef0ba1ea55a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/csp1.dir/http-server.c.o" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/http-server.c" beforeDir="false" afterPath="$PROJECT_DIR$/http-server.c" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -90,8 +89,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/http-server.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="754">
-              <caret line="338" column="34" lean-forward="true" selection-start-line="338" selection-start-column="34" selection-end-line="338" selection-end-column="34" />
+            <state relative-caret-position="-2610">
+              <caret line="506" column="11" selection-start-line="506" selection-start-column="7" selection-end-line="506" selection-end-column="11" />
               <folding>
                 <element signature="e#24#42#0" expanded="true" />
               </folding>
@@ -133,9 +132,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>endgame</find>
-      <find>next</find>
-      <find>RESET</find>
       <find>ENDGAME</find>
       <find>ENDGAME2</find>
       <find>start</find>
@@ -161,8 +157,11 @@
       <find>match</find>
       <find>unsettled</find>
       <find>strcmp</find>
-      <find>reset</find>
       <find>POST_quit</find>
+      <find>added_length</find>
+      <find>int n</find>
+      <find>reset</find>
+      <find>read</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -281,12 +280,12 @@
       <workItem from="1555296569186" duration="52000" />
       <workItem from="1555297352964" duration="13420000" />
       <workItem from="1555311337844" duration="3189000" />
-      <workItem from="1555824165407" duration="17611000" />
+      <workItem from="1555824165407" duration="21225000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="73853000" />
+    <option name="totallyTimeSpent" value="77467000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -302,7 +301,7 @@
     <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.6876268" visible="true" weight="0.36954117" />
-      <window_info id="Structure" order="1" sideWeight="0.31237322" side_tool="true" visible="true" weight="0.36954117" />
+      <window_info id="Structure" order="1" sideWeight="0.31237322" side_tool="true" weight="0.36954117" />
       <window_info id="Favorites" order="2" sideWeight="0.31114677" side_tool="true" weight="0.19817579" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
@@ -587,8 +586,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/http-server.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="754">
-          <caret line="338" column="34" lean-forward="true" selection-start-line="338" selection-start-column="34" selection-end-line="338" selection-end-column="34" />
+        <state relative-caret-position="-2610">
+          <caret line="506" column="11" selection-start-line="506" selection-start-column="7" selection-end-line="506" selection-end-column="11" />
           <folding>
             <element signature="e#24#42#0" expanded="true" />
           </folding>

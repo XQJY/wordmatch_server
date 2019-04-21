@@ -134,7 +134,7 @@ static char** listOf(int sockfd){
         return wordList1;
     } else if (player2sock == sockfd){
         return wordList2;
-    }
+    } else return NULL;
 }
 
 static char** listOfOpponent(int sockfd){
@@ -142,7 +142,7 @@ static char** listOfOpponent(int sockfd){
         return wordList2;
     } else if (player2sock == sockfd){
         return wordList1;
-    }
+    } else return NULL;
 }
 
 
@@ -370,14 +370,14 @@ static bool response_static_request(type t, int sockfd){
 }
 
 static bool response_dynamic_request(req* r, int sockfd){
-    int n;
+    int n = 0;
     int i = 0;
-    int move_from;
-    char ** wordList;
-    char* html;
-    char* insertion;
-    bool singleWord;
-    long added_length;
+    int move_from = 0;
+    char ** wordList = NULL;
+    char* html = NULL;
+    char* insertion = NULL;
+    bool singleWord = false;
+    long added_length = 0;
     char buff[2049];
 
     //decide which html file to read
@@ -452,7 +452,7 @@ static bool response_dynamic_request(req* r, int sockfd){
     stat(html, &st);
     // increase file size to accommodate the username
 
-    long size;
+    long size = 0;
     //Calculate the addedLength
     if(r->reqType == POST_NAME){
         if(r->cookie) {
