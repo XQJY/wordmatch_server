@@ -76,14 +76,12 @@ typedef struct cookie{
 
 //static variables
 static cookie* cookieLib[10];
-static char* wordList;
 static char* wordList1[20];
 static char* wordList2[20];
 static int currCookie = 0;
 static status stage = STANDBY;
 static int player1sock = -1;
 static int player2sock = -1;
-static int submittedsock = -1;
 static int unsettledsock = -1;
 static int currentRound = -1;
 
@@ -105,30 +103,30 @@ static bool isPlayer(int sockfd){
     return player1sock == sockfd || player2sock ==sockfd;
 }
 
-static void resetPlayer(){
-        player1sock = -1;
-        player2sock = -1;
+static void record_unsettled(int sockfd){
+    if(player1sock == sockfd){
+        unsettledsock = player2sock;
+    } else if (player2sock == sockfd){
+        unsettledsock = player1sock;
+    }
 }
 
-static char* concatenateList(char** wordList){
-    int len = 0;
-    int i,j = 0;
-    char* temp;
+static void reset(){
+    int i = 0;
+    player1sock = -1;
+    player2sock = -1;
+    while (i < 20 && wordList1[i] != NULL) {
+       free(wordList1[i]);
+       wordList1[i] = NULL;
+       i++;
+    }
 
-    while(i < 20 && wordList[i] != NULL){
-        len += strlen(wordList[i]);
+    i = 0;
+    while (i < 20 && wordList2[i] != NULL) {
+        free(wordList2[i]);
+        wordList2[i] = NULL;
         i++;
     }
-
-    len += 2 * (i-1);
-    temp = calloc(sizeof(char), len + 1);
-
-    while(j < 20 && wordList[j] != NULL){
-        strcat(temp, wordList[j]);
-        if(j != i -1) strcat(temp, ", ");
-    }
-
-    return temp;
 }
 
 static char** listOf(int sockfd){
@@ -136,7 +134,7 @@ static char** listOf(int sockfd){
         return wordList1;
     } else if (player2sock == sockfd){
         return wordList2;
-    } else return NULL;
+    }
 }
 
 static char** listOfOpponent(int sockfd){
@@ -144,17 +142,41 @@ static char** listOfOpponent(int sockfd){
         return wordList2;
     } else if (player2sock == sockfd){
         return wordList1;
-    } else return NULL;
+    }
+}
+
+
+static char* concatenateList(int sockfd){
+    int len = 0;
+    int i = 0;
+    int j = 0;
+    char* temp;
+    char** tempList = listOf(sockfd);
+
+    while(i < 20 && tempList[i] != NULL){
+        len += strlen(tempList[i]);
+        i++;
+    }
+
+    len += 2 * (i-1);
+    temp = calloc(sizeof(char), len + 1);
+
+    while(j < 20 && tempList[j] != NULL){
+        strcat(temp, tempList[j]);
+        if(j != i -1) strcat(temp, ", ");
+        j++;
+    }
+
+    return temp;
 }
 
 static bool match(char* word, int sockfd){
     int i = 0;
-    char ** temp = listOfOpponent(sockfd);
+    char ** tempList = listOfOpponent(sockfd);
 
-    if(temp == NULL) return false;
-
-    while(i < 20 && temp[i] != NULL){
-      if(strcmp(temp[i], word))  return true;
+    while(i < 20 && tempList[i] != NULL){
+      if(!strcmp(tempList[i], word))  return true;
+      i++;
     }
 
     return false;
@@ -305,9 +327,10 @@ static bool response_static_request(type t, int sockfd){
         html = "1_intro.html";
     }  else if (t == POST_QUIT){
         //reset the status
-        stage = STANDBY;
-        submittedsock = -1;
-        resetPlayer();
+        if(isPlayer(sockfd)) {
+            stage = STANDBY;
+            reset();
+        }
         html = "7_gameover.html";
     } else if (t == ENDGAME){
         html = "6_endgame.html";
@@ -348,7 +371,9 @@ static bool response_static_request(type t, int sockfd){
 
 static bool response_dynamic_request(req* r, int sockfd){
     int n;
+    int i = 0;
     int move_from;
+    char ** wordList;
     char* html;
     char* insertion;
     bool singleWord;
@@ -374,16 +399,11 @@ static bool response_dynamic_request(req* r, int sockfd){
         }
         if(stage == READY){
             html = "4_accepted.html";
-            //check if both player have submitted the keywords, change stage into completed if so
-            if(submittedsock < 0) {
-                submittedsock = sockfd;
-            } else if (submittedsock != sockfd){
-                //COMPLETED RESET
-                unsettledsock = submittedsock;
-                submittedsock = -1;
-                wordList = NULL;
+            //check if the player have a match
+            if(match(r->value, sockfd)) {
+                record_unsettled(sockfd);
                 stage = STANDBY;
-                resetPlayer();
+                reset();
                 if(!response_static_request(ENDGAME,sockfd)){
                     return false;
                 }
@@ -416,10 +436,8 @@ static bool response_dynamic_request(req* r, int sockfd){
             nextRound();
             stage = PENDING_READY;
         }  else if(stage == PENDING_READY) {
+            setPlayer(sockfd);
             stage = READY;
-            //reset the wordList when both player is ready
-            free(wordList);
-            wordList = NULL;
         }  else if(!response_static_request(RETRY,sockfd)){
             return false;
         }
@@ -449,18 +467,25 @@ static bool response_dynamic_request(req* r, int sockfd){
         }
     } else if(r->reqType == POST_GUESS){
         if(stage == READY){
-            if(wordList == NULL) {
+            wordList = listOf(sockfd);
+            if(wordList[0] == NULL) {
                 singleWord = true;
                 added_length = strlen(r->value) + strlen(" has been ");
-                wordList = (char*)calloc(sizeof(char), strlen(r->value) + 1);
-                memcpy(wordList, r->value, sizeof(char) * strlen(r->value) + 1);
+                wordList[0] = (char*)calloc(sizeof(char), strlen(r->value) + 1);
+                memcpy(wordList[0], r->value, sizeof(char) * strlen(r->value) + 1);
             }
             else {
                 singleWord = false;
-                added_length = strlen(wordList) + strlen(", ") + strlen(r->value)  + strlen(" have been ");
-                wordList = (char*) realloc(wordList, sizeof(char)* ( added_length + 1 ));
-                strcat(wordList, ", ");
-                strcat(wordList, r->value);
+                while(i < 20){
+                    if(wordList[i] == NULL) {
+                        wordList[i] = (char*)calloc(sizeof(char), strlen(r->value) + 1);
+                        memcpy(wordList[i], r->value, sizeof(char) * strlen(r->value) + 1);
+                        break;
+                    }
+                    i++;
+                }
+                insertion = concatenateList(sockfd);
+                added_length = strlen(insertion) + strlen(" have been ");
             }
         } else {
             added_length = strlen(r->value) + strlen(" has been ");
@@ -498,11 +523,12 @@ static bool response_dynamic_request(req* r, int sockfd){
     } else if(r->reqType == POST_GUESS){
         if(stage == READY){
             move_from = ((int) (strstr(buff, "Accepted!") - buff));
-            insertion = (char*) calloc(sizeof(char), added_length + 1);
-            memcpy(insertion, wordList, sizeof(char)* (added_length +1));
             if(singleWord) {
+                insertion = (char*) calloc(sizeof(char), added_length + 1);
+                memcpy(insertion, wordList[0], sizeof(char)* (added_length +1));
                 strcat(insertion, " has been ");
             } else {
+                insertion = realloc(insertion, sizeof(char)* (added_length +1));
                 strcat(insertion, " have been ");
             }
         } else {
@@ -679,14 +705,10 @@ int main(int argc, char * argv[])
                     // a request is sent from the client
                 else if (!handle_http_request(i))
                 {
-                    if(isPlayer(i))resetPlayer();
+                    if(isPlayer(i))reset();
 
                     if(unsettledsock == i){
                         unsettledsock = -1;
-                    }
-
-                    if(submittedsock == i ){
-                        submittedsock = -1;
                     }
 
                     close(i);

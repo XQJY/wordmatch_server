@@ -12,11 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="208285f7-7617-466d-9996-0ef0ba1ea55a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/8_retry.html" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/8_retry.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/csp1.dir/http-server.c.o" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/csp1" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/csp1" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/http-server.c" beforeDir="false" afterPath="$PROJECT_DIR$/http-server.c" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -94,8 +90,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/http-server.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-13075">
-              <caret line="149" column="42" selection-start-line="149" selection-start-column="42" selection-end-line="149" selection-end-column="42" />
+            <state relative-caret-position="754">
+              <caret line="338" column="34" lean-forward="true" selection-start-line="338" selection-start-column="34" selection-end-line="338" selection-end-column="34" />
               <folding>
                 <element signature="e#24#42#0" expanded="true" />
               </folding>
@@ -104,10 +100,10 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/cmake-build-debug/1_intro.html">
+        <entry file="file:///usr/include/string.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="638">
-              <caret line="22" lean-forward="true" selection-start-line="22" selection-end-line="22" />
+            <state relative-caret-position="360">
+              <caret line="383" selection-start-line="383" selection-end-line="383" />
             </state>
           </provider>
         </entry>
@@ -137,22 +133,9 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>standby</find>
-      <find>quit</find>
-      <find>parse</find>
-      <find>RETRY</find>
-      <find>8_</find>
-      <find>3</find>
-      <find>end</find>
-      <find>QUIT</find>
-      <find>TYPEERROR</find>
-      <find>START</find>
-      <find>strcat</find>
-      <find>resetPla</find>
       <find>endgame</find>
       <find>next</find>
       <find>RESET</find>
-      <find>POST_quit</find>
       <find>ENDGAME</find>
       <find>ENDGAME2</find>
       <find>start</find>
@@ -167,6 +150,19 @@
       <find>isplayer</find>
       <find>GUESS</find>
       <find>return false</find>
+      <find>if</find>
+      <find>list == NULL</find>
+      <find>WORDlist1 !=</find>
+      <find>while</find>
+      <find>[0]</find>
+      <find>disconnected</find>
+      <find>SEtpl</find>
+      <find>submitted</find>
+      <find>match</find>
+      <find>unsettled</find>
+      <find>strcmp</find>
+      <find>reset</find>
+      <find>POST_quit</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -285,12 +281,12 @@
       <workItem from="1555296569186" duration="52000" />
       <workItem from="1555297352964" duration="13420000" />
       <workItem from="1555311337844" duration="3189000" />
-      <workItem from="1555824165407" duration="12501000" />
+      <workItem from="1555824165407" duration="17611000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="68743000" />
+    <option name="totallyTimeSpent" value="73853000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -335,8 +331,13 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/http-server.c</url>
-          <line>679</line>
-          <option name="timeStamp" value="23" />
+          <line>402</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/http-server.c</url>
+          <line>173</line>
+          <option name="timeStamp" value="35" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -347,16 +348,52 @@
         <watch expression="wordList" language="ObjectiveC" />
         <watch expression="r" language="ObjectiveC" />
         <watch expression="stage" language="ObjectiveC" />
+        <watch expression="tempList" language="ObjectiveC" />
         <watch expression="sockfd" language="ObjectiveC" />
         <watch expression="i" language="ObjectiveC" />
         <watch expression="submittedsock" language="ObjectiveC" />
         <watch expression="unsettledsock" language="ObjectiveC" />
         <watch expression="currentRound" language="ObjectiveC" />
+        <watch expression="sockfd" language="ObjectiveC" />
+        <watch expression="player1sock" language="ObjectiveC" />
+        <watch expression="player2sock" language="ObjectiveC" />
+        <watch expression="wordList1" language="ObjectiveC" />
+        <watch expression="wordList2" language="ObjectiveC" />
       </configuration>
     </watches-manager>
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="watch">
+      <expression>
+        <expression-string>wordList2</expression-string>
+        <language-id>ObjectiveC</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>wordList1</expression-string>
+        <language-id>ObjectiveC</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>tempList</expression-string>
+        <language-id>ObjectiveC</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>player2sock</expression-string>
+        <language-id>ObjectiveC</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>player1sock</expression-string>
+        <language-id>ObjectiveC</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>sockfd</expression-string>
+        <language-id>ObjectiveC</language-id>
+        <evaluation-mode>EXPRESSION</evaluation-mode>
+      </expression>
       <expression>
         <expression-string>index</expression-string>
         <language-id>ObjectiveC</language-id>
@@ -377,36 +414,6 @@
         <language-id>ObjectiveC</language-id>
         <evaluation-mode>EXPRESSION</evaluation-mode>
       </expression>
-      <expression>
-        <expression-string>submittedsock</expression-string>
-        <language-id>ObjectiveC</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>cliaddr</expression-string>
-        <language-id>ObjectiveC</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>masterfds</expression-string>
-        <language-id>ObjectiveC</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>i</expression-string>
-        <language-id>ObjectiveC</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>sockfd</expression-string>
-        <language-id>ObjectiveC</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>stage</expression-string>
-        <language-id>ObjectiveC</language-id>
-        <evaluation-mode>EXPRESSION</evaluation-mode>
-      </expression>
     </expressions>
     <expressions id="evaluateExpression">
       <expression>
@@ -424,13 +431,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="232">
           <caret line="8" selection-start-line="8" selection-end-line="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/include/string.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="362">
-          <caret line="224" selection-start-line="224" selection-end-line="224" />
         </state>
       </provider>
     </entry>
@@ -547,13 +547,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cmake-build-debug/4_accepted.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="174">
-          <caret line="6" column="21" selection-start-line="6" selection-start-column="12" selection-end-line="6" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/cmake-build-debug/8_retry.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="261">
@@ -564,10 +557,24 @@
     <entry file="file://$PROJECT_DIR$/cmake-build-debug/9_disconnected.html">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
+    <entry file="file:///usr/include/string.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="383" selection-start-line="383" selection-end-line="383" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/cmake-build-debug/6_endgame.html">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="609">
           <caret line="21" selection-start-line="21" selection-end-line="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cmake-build-debug/4_accepted.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="174">
+          <caret line="6" column="21" selection-start-line="6" selection-start-column="12" selection-end-line="6" selection-end-column="21" />
         </state>
       </provider>
     </entry>
@@ -580,8 +587,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/http-server.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-13075">
-          <caret line="149" column="42" selection-start-line="149" selection-start-column="42" selection-end-line="149" selection-end-column="42" />
+        <state relative-caret-position="754">
+          <caret line="338" column="34" lean-forward="true" selection-start-line="338" selection-start-column="34" selection-end-line="338" selection-end-column="34" />
           <folding>
             <element signature="e#24#42#0" expanded="true" />
           </folding>
